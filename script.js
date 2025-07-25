@@ -1,4 +1,4 @@
-// 📜 script.js – VoxPop Audio Interview avec pause, pré-écoute et upload vers Google Drive
+// 📜 script.js – VoxPop Audio Interview (Texte ou Audio, Upload, Pré-écoute, Validation)
 
 let questions = [];
 let currentQuestion = 0;
@@ -30,7 +30,7 @@ function showQuestion() {
 
   const q = questions[currentQuestion];
   if (!q) {
-    document.getElementById("question-section").style.display = "none";
+    container.style.display = "none";
     document.getElementById("thank-you").style.display = "block";
     return;
   }
@@ -70,10 +70,16 @@ function showQuestion() {
     container.appendChild(input);
   }
 
-  const button = document.createElement("button");
-  button.textContent = "Valider cette réponse";
-  button.onclick = () => submitResponse(q);
-  container.appendChild(button);
+  container.appendChild(document.createElement("br"));
+
+  // ✅ Bouton de validation stylisé
+  const validateBtn = document.createElement("button");
+  validateBtn.textContent = "✅ Valider cette réponse";
+  validateBtn.onclick = () => submitResponse(q);
+  validateBtn.style.marginTop = "30px";
+  validateBtn.style.backgroundColor = "#28a745";
+  validateBtn.style.fontWeight = "bold";
+  container.appendChild(validateBtn);
 }
 
 function createAudioInterface(container) {
@@ -140,8 +146,10 @@ function showAudioPreview(blob) {
 
 function submitResponse(question) {
   const text = document.getElementById("response-input")?.value || "";
-  if (!text && !recordedBlob) {
-    alert("Réponse obligatoire");
+
+  // ✅ Vérifie qu'au moins texte ou audio est fourni
+  if (!text.trim() && !recordedBlob) {
+    alert("Veuillez écrire une réponse ou enregistrer un message audio.");
     return;
   }
 
