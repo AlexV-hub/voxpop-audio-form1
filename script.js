@@ -1,11 +1,8 @@
-// 📜 script.js – VoxPop Audio Interview avec état REC/Pause/Reprendre/Réécoute/Effacer + interface texte
-
 let questions = [];
 let currentQuestion = 0;
 let mediaRecorder;
 let recordedChunks = [];
 let recordedBlob = null;
-let stream = null;
 
 const sheetURL = "https://script.google.com/macros/s/AKfycby2qX7_YLIouSJg_v4Vdf6wFU8V5hX9WBymOyy1MbQfPKThNJauihRc9MKUE9d6V68Qrg/exec";
 
@@ -41,86 +38,93 @@ function showQuestion() {
   container.appendChild(title);
 
   const inputType = q["Type "]?.toLowerCase().trim();
-  let input;
+  const isVoice = inputType.includes("voice");
+  const isText = inputType.includes("text");
+  const isEmail = inputType.includes("email");
 
-  if (inputType.includes("email")) {
-    input = document.createElement("input");
+  if (isEmail) {
+    const input = document.createElement("input");
     input.type = "email";
-    input.id = "response-input";
-    container.appendChild(input);
-  } else if (inputType.includes("text") && !inputType.includes("voice")) {
-    input = document.createElement("textarea");
-    input.id = "response-input";
-    container.appendChild(input);
-  } else if (inputType.includes("voice") && inputType.includes("text")) {
-    input = document.createElement("textarea");
-    input.id = "response-input";
-    container.appendChild(input);
-    container.appendChild(document.createElement("br"));
-    container.appendChild(document.createTextNode("Ou réponse vocale :"));
-    container.appendChild(document.createElement("br"));
-    createAudioInterface(container);
-  } else if (inputType.includes("voice")) {
-    container.appendChild(document.createTextNode("Réponse vocale :"));
-    container.appendChild(document.createElement("br"));
-    createAudioInterface(container);
-  } else {
-    input = document.createElement("textarea");
     input.id = "response-input";
     container.appendChild(input);
   }
 
-  const validateBtn = document.createElement("button");
-  validateBtn.textContent = "✅ Valider la réponse";
-  validateBtn.classList.add("validate-btn");
-  validateBtn.onclick = () => submitResponse(q);
-  container.appendChild(document.createElement("br"));
-  container.appendChild(validateBtn);
+  if (isText || (!isVoice && !isEmail)) {
+    const input = document.createElement("textarea");
+    input.id = "response-input";
+    container.appendChild(input);
+  }
+
+  if (isVoice) {
+    const label = document.createElement("p");
+    label.textContent = "Réponse vocale :";
+    container.appendChild(label);
+    createAudioInterface(container);
+  }
+
+  const submitBtn = document.createElement("button");
+  submitBtn.textContent = "✅ Valider la réponse";
+  submitBtn.className = "validate-btn";
+  submitBtn.onclick = () => submitResponse(q);
+  container.appendChild(submitBtn);
 }
 
 function createAudioInterface(container) {
-  const audioControls = document.createElement("div");
-  audioControls.id = "audio-controls";
+  const controls = document.createElement("div");
+  controls.className = "audio-controls";
 
-  const recBtn = createAudioButton("🎙️ REC", startRecording, "rec-btn");
-  const pauseBtn = createAudioButton("⏸️ Pause", pauseRecording, "pause-btn");
-  const resumeBtn = createAudioButton("▶️ Reprendre REC", resumeRecording, "resume-btn");
-  const playBtn = createAudioButton("🔊 Réécouter", playRecording, "play-btn");
-  const deleteBtn = createAudioButton("🗑️ Effacer", confirmErase, "delete-btn");
+  const recBtn = document.createElement("button");
+  recBtn.textContent = "🎙️ REC";
+  recBtn.className = "rec";
+  recBtn.onclick = startRecording;
 
-  audioControls.appendChild(recBtn);
-  audioControls.appendChild(pauseBtn);
-  audioControls.appendChild(resumeBtn);
-  audioControls.appendChild(playBtn);
-  audioControls.appendChild(deleteBtn);
-  container.appendChild(audioControls);
+  const pauseBtn = document.createElement("button");
+  pauseBtn.textContent = "⏸️ Pause";
+  pauseBtn.className = "pause";
+  pauseBtn.onclick = pauseRecording;
 
-  const audioPreview = document.createElement("audio");
-  audioPreview.id = "audio-preview";
-  audioPreview.controls = true;
-  container.appendChild(audioPreview);
-}
+  const resumeBtn = document.createElement("button");
+  resumeBtn.textContent = "▶️ Reprendre REC";
+  resumeBtn.className = "resume";
+  resumeBtn.onclick = resumeRecording;
 
-function createAudioButton(text, handler, className) {
-  const btn = document.createElement("button");
-  btn.textContent = text;
-  btn.classList.add("audio-button");
-  if (className) btn.classList.add(className);
-  btn.onclick = handler;
-  return btn;
+  const previewBtn = document.createElement("button");
+  previewBtn.textContent = "🔊 Réécouter";
+  previewBtn.className = "playback";
+  previewBtn.onclick = showAudioPreview;
+
+  const clearBtn = document.createElement("button");
+  clearBtn.textContent = "🗑️ Effacer";
+  clearBtn.className = "delete";
+  clearBtn.onclick = () => {
+    if (confirm("Effacer l'enregistrement ?")) {
+      recordedBlob = null;
+      document.getElementById("audio-preview")?.remove();
+    }
+  };
+
+  controls.append(recBtn, pauseBtn, resumeBtn, previewBtn, clearBtn);
+  container.appendChild(controls);
+
+  const audio = document.createElement("audio");
+  audio.id = "audio-preview";
+  audio.controls = true;
+  audio.style.display = "none";
+  container.appendChild(audio);
 }
 
 function startRecording() {
   recordedChunks = [];
-  navigator.mediaDevices.getUserMedia({ audio: true }).then(s => {
-    stream = s;
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
     mediaRecorder = new MediaRecorder(stream);
     mediaRecorder.ondataavailable = e => {
       if (e.data.size > 0) recordedChunks.push(e.data);
     };
     mediaRecorder.onstop = () => {
       recordedBlob = new Blob(recordedChunks, { type: "audio/webm" });
-      document.getElementById("audio-preview").src = URL.createObjectURL(recordedBlob);
+      const audio = document.getElementById("audio-preview");
+      audio.src = URL.createObjectURL(recordedBlob);
+      audio.style.display = "block";
     };
     mediaRecorder.start();
   }).catch(console.error);
@@ -134,21 +138,10 @@ function resumeRecording() {
   if (mediaRecorder?.state === "paused") mediaRecorder.resume();
 }
 
-function playRecording() {
-  if (recordedBlob) {
-    const audio = document.getElementById("audio-preview");
-    audio.src = URL.createObjectURL(recordedBlob);
-    audio.play();
-  }
-}
-
-function confirmErase() {
-  if (confirm("Effacer l'enregistrement et recommencer ?")) {
-    recordedChunks = [];
-    recordedBlob = null;
-    document.getElementById("audio-preview").src = "";
-    if (mediaRecorder?.state === "recording") mediaRecorder.stop();
-  }
+function showAudioPreview() {
+  if (!recordedBlob) return;
+  const audio = document.getElementById("audio-preview");
+  audio.play();
 }
 
 function submitResponse(question) {
