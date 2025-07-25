@@ -3,6 +3,7 @@ let currentQuestion = 0;
 let mediaRecorder;
 let recordedChunks = [];
 let recordedBlob = null;
+let stream = null;
 
 const sheetURL = "https://script.google.com/macros/s/AKfycby2qX7_YLIouSJg_v4Vdf6wFU8V5hX9WBymOyy1MbQfPKThNJauihRc9MKUE9d6V68Qrg/exec";
 
@@ -23,12 +24,13 @@ function startInterview() {
 
 function showQuestion() {
   const container = document.getElementById("question-section");
-  container.style.display = "block";
   container.innerHTML = "";
+  container.style.display = "block";
+  recordedBlob = null;
 
   const q = questions[currentQuestion];
   if (!q) {
-    document.getElementById("question-section").style.display = "none";
+    container.style.display = "none";
     document.getElementById("thank-you").style.display = "block";
     return;
   }
@@ -38,84 +40,58 @@ function showQuestion() {
   container.appendChild(title);
 
   const inputType = q["Type "]?.toLowerCase().trim();
-  const isVoice = inputType.includes("voice");
-  const isText = inputType.includes("text");
-  const isEmail = inputType.includes("email");
+  let onlyText = inputType.includes("text") && !inputType.includes("voice");
+  let textArea = document.createElement("textarea");
+  textArea.id = "response-input";
+  container.appendChild(textArea);
 
-  if (isEmail) {
-    const input = document.createElement("input");
-    input.type = "email";
-    input.id = "response-input";
-    container.appendChild(input);
-  }
+  if (!onlyText) {
+    const voiceLabel = document.createElement("p");
+    voiceLabel.textContent = "Réponse vocale :";
+    container.appendChild(voiceLabel);
 
-  if (isText || (!isVoice && !isEmail)) {
-    const input = document.createElement("textarea");
-    input.id = "response-input";
-    container.appendChild(input);
-  }
-
-  if (isVoice) {
-    const label = document.createElement("p");
-    label.textContent = "Réponse vocale :";
-    container.appendChild(label);
     createAudioInterface(container);
   }
 
-  const submitBtn = document.createElement("button");
-  submitBtn.textContent = "✅ Valider la réponse";
-  submitBtn.className = "validate-btn";
-  submitBtn.onclick = () => submitResponse(q);
-  container.appendChild(submitBtn);
+  const validateBtn = document.createElement("button");
+  validateBtn.textContent = "✅ Valider la réponse";
+  validateBtn.className = "validate";
+  validateBtn.onclick = () => submitResponse(q);
+  container.appendChild(validateBtn);
 }
 
 function createAudioInterface(container) {
-  const controls = document.createElement("div");
-  controls.className = "audio-controls";
+  const audioControls = document.createElement("div");
+  audioControls.className = "audio-controls";
 
-  const recBtn = document.createElement("button");
-  recBtn.textContent = "🎙️ REC";
-  recBtn.className = "rec";
-  recBtn.onclick = startRecording;
+  const recBtn = createButton("🎙️ REC", "rec", startRecording);
+  const pauseBtn = createButton("⏸️ Pause", "pause", pauseRecording);
+  const resumeBtn = createButton("▶️ Reprendre REC", "resume", resumeRecording);
+  const playBtn = createButton("🔊 Réécouter", "play", playRecording);
+  const deleteBtn = createButton("🗑️ Effacer", "delete", confirmDelete);
 
-  const pauseBtn = document.createElement("button");
-  pauseBtn.textContent = "⏸️ Pause";
-  pauseBtn.className = "pause";
-  pauseBtn.onclick = pauseRecording;
+  audioControls.append(recBtn, pauseBtn, resumeBtn, playBtn, deleteBtn);
+  container.appendChild(audioControls);
 
-  const resumeBtn = document.createElement("button");
-  resumeBtn.textContent = "▶️ Reprendre REC";
-  resumeBtn.className = "resume";
-  resumeBtn.onclick = resumeRecording;
+  const preview = document.createElement("audio");
+  preview.id = "audio-preview";
+  preview.controls = true;
+  preview.style.display = "none";
+  container.appendChild(preview);
+}
 
-  const previewBtn = document.createElement("button");
-  previewBtn.textContent = "🔊 Réécouter";
-  previewBtn.className = "playback";
-  previewBtn.onclick = showAudioPreview;
-
-  const clearBtn = document.createElement("button");
-  clearBtn.textContent = "🗑️ Effacer";
-  clearBtn.className = "delete";
-  clearBtn.onclick = () => {
-    if (confirm("Effacer l'enregistrement ?")) {
-      recordedBlob = null;
-      document.getElementById("audio-preview")?.remove();
-    }
-  };
-
-  controls.append(recBtn, pauseBtn, resumeBtn, previewBtn, clearBtn);
-  container.appendChild(controls);
-
-  const audio = document.createElement("audio");
-  audio.id = "audio-preview";
-  audio.controls = true;
-  audio.style.display = "none";
-  container.appendChild(audio);
+function createButton(label, className, onClick) {
+  const btn = document.createElement("button");
+  btn.textContent = label;
+  btn.className = className;
+  btn.onclick = onClick;
+  return btn;
 }
 
 function startRecording() {
   recordedChunks = [];
-  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(s => {
+    stream = s;
     mediaRecorder = new MediaRecorder(stream);
     mediaRecorder.ondataavailable = e => {
       if (e.data.size > 0) recordedChunks.push(e.data);
@@ -127,7 +103,7 @@ function startRecording() {
       audio.style.display = "block";
     };
     mediaRecorder.start();
-  }).catch(console.error);
+  });
 }
 
 function pauseRecording() {
@@ -138,23 +114,40 @@ function resumeRecording() {
   if (mediaRecorder?.state === "paused") mediaRecorder.resume();
 }
 
-function showAudioPreview() {
-  if (!recordedBlob) return;
+function playRecording() {
   const audio = document.getElementById("audio-preview");
-  audio.play();
+  if (audio?.src) {
+    audio.play();
+  } else {
+    alert("Aucun enregistrement à réécouter.");
+  }
+}
+
+function confirmDelete() {
+  if (confirm("Effacer l'enregistrement en cours ?")) {
+    stopStream();
+    recordedBlob = null;
+    document.getElementById("audio-preview").style.display = "none";
+  }
+}
+
+function stopStream() {
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
 }
 
 function submitResponse(question) {
   const text = document.getElementById("response-input")?.value || "";
   if (!text && !recordedBlob) {
-    alert("Réponse obligatoire");
+    alert("Veuillez répondre par écrit ou audio.");
     return;
   }
 
   const formData = new FormData();
   formData.append("index", currentQuestion);
   formData.append("text", text);
-
   if (recordedBlob) {
     formData.append("audio", recordedBlob, `question${currentQuestion + 1}.webm`);
   }
@@ -164,10 +157,11 @@ function submitResponse(question) {
     body: formData
   }).then(() => {
     recordedBlob = null;
+    stopStream();
     currentQuestion++;
     showQuestion();
   }).catch(err => {
-    alert("Erreur d'envoi des données : " + err);
+    alert("Erreur d'envoi : " + err);
     console.error(err);
   });
 }
