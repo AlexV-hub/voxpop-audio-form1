@@ -1,67 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
 body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f9f9f9;
-  color: #333;
+  font-family: 'Poppins', sans-serif;
   margin: 0;
-  padding: 20px;
+  padding: 0;
+  background-color: #f7f9fc;
+  color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
 }
 
 .container {
-  max-width: 700px;
-  margin: 0 auto;
-  background: #ffffff;
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
+  max-width: 600px;
+  width: 100%;
+  margin: 2rem;
+  background: #fff;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 h1, h2 {
-  color: #222;
-  margin-bottom: 20px;
-}
-
-#intro-section,
-#question-section,
-#thank-you {
-  transition: all 0.3s ease-in-out;
+  text-align: center;
+  color: #2c3e50;
 }
 
 textarea, input[type="email"] {
   width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  margin-bottom: 20px;
+  padding: 1rem;
+  font-size: 1rem;
   border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 1em;
-  resize: vertical;
+  border-radius: 5px;
+  margin: 1rem 0;
   box-sizing: border-box;
+  resize: vertical;
 }
 
 button {
-  background-color: #0070f3;
-  color: white;
-  padding: 12px 18px;
+  font-family: inherit;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
   border: none;
-  border-radius: 8px;
-  margin-right: 10px;
-  font-size: 0.95em;
+  border-radius: 5px;
+  margin: 0.5rem;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background 0.3s ease;
 }
 
 button:hover {
-  background-color: #005ec1;
+  opacity: 0.9;
 }
 
-audio {
-  margin-top: 20px;
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Boutons spécifiques */
+button.rec {
+  background-color: #e74c3c;
+  color: white;
+}
+
+button.pause {
+  background-color: #f39c12;
+  color: white;
+}
+
+button.resume {
+  background-color: #3498db;
+  color: white;
+}
+
+button.play {
+  background-color: #2ecc71;
+  color: white;
+}
+
+button.reset {
+  background-color: #9b59b6;
+  color: white;
+}
+
+button.validate {
+  background-color: #27ae60;
+  color: white;
+  font-weight: 600;
+}
+
+button.next {
+  background-color: #2980b9;
+  color: white;
+  font-weight: 600;
+}
+
+/* Timeline */
+#timeline {
   width: 100%;
+  height: 10px;
+  background-color: #ddd;
+  border-radius: 5px;
+  margin-top: 10px;
+  overflow: hidden;
+  position: relative;
 }
 
+#timeline-fill {
+  height: 100%;
+  background-color: #2ecc71;
+  width: 0%;
+  transition: width 1s linear;
+}
+
+/* Audio preview */
+audio {
+  width: 100%;
+  margin-top: 1rem;
+  display: block;
+}
+
+/* Message de remerciement */
 #thank-you {
   text-align: center;
-  font-size: 1.2em;
-  color: #0070f3;
-  margin-top: 40px;
+  font-size: 1.2rem;
+  color: #27ae60;
+}
+
+/* Responsive */
+@media screen and (max-width: 600px) {
+  .container {
+    margin: 1rem;
+    padding: 1rem;
+  }
+
+  button {
+    width: 100%;
+    margin: 0.25rem 0;
+  }
 }
