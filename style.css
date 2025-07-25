@@ -1,22 +1,67 @@
-
 body {
-  font-family: Arial, sans-serif;
-  background: #f0f0f0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9f9f9;
+  color: #333;
+  margin: 0;
   padding: 20px;
 }
+
 .container {
-  max-width: 600px;
-  margin: auto;
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
+  max-width: 700px;
+  margin: 0 auto;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
 }
-textarea {
+
+h1, h2 {
+  color: #222;
+  margin-bottom: 20px;
+}
+
+#intro-section,
+#question-section,
+#thank-you {
+  transition: all 0.3s ease-in-out;
+}
+
+textarea, input[type="email"] {
   width: 100%;
-  height: 100px;
-  margin: 10px 0;
+  padding: 12px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1em;
+  resize: vertical;
+  box-sizing: border-box;
 }
+
 button {
-  margin: 5px;
-  padding: 10px 15px;
+  background-color: #0070f3;
+  color: white;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+  margin-right: 10px;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #005ec1;
+}
+
+audio {
+  margin-top: 20px;
+  width: 100%;
+}
+
+#thank-you {
+  text-align: center;
+  font-size: 1.2em;
+  color: #0070f3;
+  margin-top: 40px;
 }
