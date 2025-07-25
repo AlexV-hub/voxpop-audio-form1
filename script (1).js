@@ -1,78 +1,73 @@
+const questionsURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRiMKyU-JgfgkLnsj1A2E-ma2fmOepCnNhd9bJybGYN4sc1rfG-rbfF_TG6dcG3q3AhqxzUPAVguuNE/pub?output=csv";
 
-// 🔗 Lien vers ton Google Sheet publié en CSV
-const questionsURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRiMKyU-JgfgkLnsj1A2E-ma2fmOepCnNhd9bJybGYN4sc1rfG-rbfF_TG6dcG3q3AhqxzUPAVguuNE/pub?output=csv';
-
-let currentQuestion = 0;
 let questions = [];
-let mediaRecorder;
-let audioBlob = null;
-let sheetURL = 'https://script.google.com/macros/s/AKfycbwVPiT2HAsQpr_ayyUISd5729QnnMEsykSPGK_vjNtE9CZZ3ywNJpZuHzx_o7JztjmeiA/exec';
+let currentQuestion = 0;
 
+// Fonction appelée au clic sur "Commencer"
 function startInterview() {
   fetch(questionsURL)
-    .then(response => response.text())
-    .then(csv => {
-      const parsed = Papa.parse(csv, { header: true });
-      console.log("CSV chargé :", parsed.data);
-
-      questions = parsed.data.map(row => row['Intitulé']).filter(q => q);
-
-      if (questions.length === 0) {
-        alert("Aucune question chargée. Vérifie ton Google Sheet.");
-        return;
-      }
-
-      document.getElementById("intro-section").style.display = "none";
-      document.getElementById("question-section").style.display = "block";
-      showQuestion();
+    .then((response) => response.text())
+    .then((csvText) => {
+      Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function (results) {
+          questions = results.data;
+          console.log("✅ CSV chargé :", questions);
+          document.getElementById("intro-section").style.display = "none";
+          showQuestion();
+        },
+      });
     })
-    .catch(error => {
-      alert("Erreur lors du chargement des questions : " + error.message);
+    .catch((error) => {
+      console.error("Erreur de chargement du CSV :", error);
     });
 }
 
 function showQuestion() {
-  document.getElementById("question-title").innerText = questions[currentQuestion];
-  document.getElementById("text-response").value = "";
-  audioBlob = null;
-}
+  const container = document.getElementById("question-section");
+  container.innerHTML = "";
 
-function startRecording() {
-  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-    mediaRecorder = new MediaRecorder(stream);
-    const audioChunks = [];
-    mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-    mediaRecorder.onstop = () => {
-      audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-    };
-    mediaRecorder.start();
-  });
-}
+  const question = questions[currentQuestion];
+  if (!question) {
+    document.getElementById("thanks-section").style.display = "block";
+    return;
+  }
 
-function stopRecording() {
-  if (mediaRecorder) mediaRecorder.stop();
+  const title = document.createElement("h2");
+  title.textContent = `Question ${question["Question #"]} : ${question.Intitulé}`;
+  container.appendChild(title);
+
+  if (question["Type "]?.toLowerCase().includes("text")) {
+    const textarea = document.createElement("textarea");
+    textarea.rows = 4;
+    textarea.id = "response-input";
+    container.appendChild(textarea);
+  } else {
+    const audioInput = document.createElement("input");
+    audioInput.type = "file";
+    audioInput.accept = "audio/*";
+    audioInput.capture = "microphone";
+    audioInput.id = "response-input";
+    container.appendChild(audioInput);
+  }
+
+  const submitBtn = document.createElement("button");
+  submitBtn.textContent = "Valider cette réponse";
+  submitBtn.onclick = submitResponse;
+  container.appendChild(submitBtn);
+
+  container.style.display = "block";
 }
 
 function submitResponse() {
-  const responseText = document.getElementById("text-response").value;
-  if (!responseText && !audioBlob) {
-    alert("Veuillez répondre par texte ou audio.");
+  const input = document.getElementById("response-input");
+  if (!input || !input.value && !input.files?.length) {
+    alert("Merci de remplir ou d’enregistrer une réponse avant de continuer.");
     return;
   }
-  const formData = new FormData();
-  formData.append("index", currentQuestion);
-  formData.append("question", questions[currentQuestion]);
-  formData.append("responseText", responseText);
-  if (audioBlob) formData.append("audio", audioBlob);
 
-  fetch(sheetURL, { method: "POST", body: formData })
-    .then(() => {
-      currentQuestion++;
-      if (currentQuestion < questions.length) {
-        showQuestion();
-      } else {
-        document.getElementById("question-section").style.display = "none";
-        document.getElementById("thank-you").style.display = "block";
-      }
-    });
+  // Ici tu peux ajouter l’envoi à Google Apps Script
+  currentQuestion++;
+  showQuestion();
 }
