@@ -1,205 +1,252 @@
-// Configuration
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycby2qX7_YLIouSJg_v4Vdf6wFU8V5hX9WBymOyy1MbQfPKThNJauihRc9MKUE9d6V68Qrg/exec';
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Questionnaire Vox-Pop - Enregistrement Audio et Texte</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/lucide.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/lucide.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Écran de bienvenue -->
+        <div id="welcome-screen" class="screen">
+            <div class="container">
+                <div class="welcome-card">
+                    <div class="welcome-header">
+                        <div class="icon-circle">
+                            <i data-lucide="mic"></i>
+                        </div>
+                        <h1>Bienvenue dans le questionnaire Vox-Pop!</h1>
+                    </div>
+                    
+                    <div class="instructions">
+                        <div class="instruction-card blue">
+                            <h3>📋 Instructions importantes :</h3>
+                            <ul>
+                                <li>• Ce questionnaire contient <strong>11 questions</strong> sur votre projet</li>
+                                <li>• Vous pouvez répondre par <strong>audio</strong> ou par <strong>écrit</strong></li>
+                                <li>• Pour l'audio : autorisez l'accès au microphone</li>
+                                <li>• Vous pouvez faire des pauses, réécouter et modifier vos réponses</li>
+                                <li>• Le questionnaire prend environ <strong>15-20 minutes</strong></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="instruction-card green">
+                            <h3>🎯 Objectif :</h3>
+                            <p>Ce questionnaire nous aide à mieux comprendre votre projet et vos besoins. 
+                               Vos réponses seront traitées automatiquement pour générer un résumé personnalisé.</p>
+                        </div>
+                        
+                        <div class="instruction-card amber">
+                            <h3>🔒 Confidentialité :</h3>
+                            <p>Vos données sont sécurisées et ne seront utilisées que dans le cadre de l'évaluation de votre projet.</p>
+                        </div>
+                    </div>
+                    
+                    <button id="start-btn" class="btn-primary large">
+                        Commencer le questionnaire
+                    </button>
+                </div>
+            </div>
+        </div>
 
-// Questions data
-const questionsData = [
-    { id: 1, question: "Nom, Prénom", type: "Voice recording or Short text" },
-    { id: 2, question: "Adresse email dédiée au projet ?", type: "Short text" },
-    { id: 3, question: "Pourquoi revenir sur le marché HoReCa maintenant ? Quel(s) progrès technologique précis t'y a poussé ?", type: "Voice recording ou Short text" },
-    { id: 4, question: "Quel(s) problem(s) concret(s) veut résoudre Vox-Pop! pour les restaurateurs ?", type: "Voice recording ou Short text" },
-    { id: 5, question: "Quelles sont les 3 fonctionnalités clés du produit au stade MVP?", type: "Voice recording ou Short text" },
-    { id: 6, question: "Quel est le modèle économique prévu ? (Saas, Freemium, Commission, Renting etc)", type: "Voice recording ou Short text" },
-    { id: 7, question: "Quelle est la cible prioritaire en phase pilote et dans les 3 mois du lancement ? Et Pourquoi ?", type: "Voice recording ou Short text" },
-    { id: 8, question: "Quels sont les 2 ou 3 plus grands risques identifiés à ce stade?", type: "Voice recording ou Short text" },
-    { id: 9, question: "Quels sont les principaux concurrents identifiés par zone EMEA, NA, APAC, LATAM ?", type: "Voice recording ou Short text" },
-    { id: 10, question: "Quelle serait la preuve irréfutable de succès dans 1 an, 2ans, 3ans ?", type: "Voice recording ou Short text" },
-    { id: 11, question: "Autorises-tu que cet enregistrement soit traité automatiquement ?", type: "Yes / No" }
-];
+        <!-- Écran questionnaire -->
+        <div id="questionnaire-screen" class="screen hidden">
+            <!-- Barre de progression -->
+            <div class="progress-bar">
+                <div class="progress-container">
+                    <div class="progress-info">
+                        <span id="progress-text">Question 1 sur 11</span>
+                        <span id="progress-percent">9%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
 
-// État de l'application
-let currentQuestion = 0;
-let responses = {};
-let responseMode = 'text'; // 'text' ou 'audio'
-let isRecording = false;
-let isPaused = false;
-let audioBlob = null;
-let audioValidated = false;
-let recordingTime = 0;
-let recordingTimer = null;
-let mediaRecorder = null;
-let audioStream = null;
-let audioChunks = [];
+            <!-- Contenu principal -->
+            <div class="container">
+                <div class="question-card">
+                    <!-- Question -->
+                    <div class="question-header">
+                        <h1 id="question-text">Question sera affichée ici</h1>
+                        <p id="question-type" class="question-type">Type de réponse</p>
+                    </div>
 
-// Éléments DOM
-const welcomeScreen = document.getElementById('welcome-screen');
-const questionnaireScreen = document.getElementById('questionnaire-screen');
-const completionScreen = document.getElementById('completion-screen');
-const loadingOverlay = document.getElementById('loading-overlay');
+                    <!-- Sélecteur de type de réponse -->
+                    <div id="response-selector" class="response-selector hidden">
+                        <button id="text-mode-btn" class="mode-btn">
+                            <i data-lucide="file-text"></i>
+                            Réponse écrite
+                        </button>
+                        <button id="audio-mode-btn" class="mode-btn">
+                            <i data-lucide="mic"></i>
+                            Réponse audio
+                        </button>
+                    </div>
 
-// Éléments de contrôle
-const startBtn = document.getElementById('start-btn');
-const prevBtn = document.getElementById('prev-btn');
-const nextBtn = document.getElementById('next-btn');
-const restartBtn = document.getElementById('restart-btn');
+                    <!-- Interface de réponse -->
+                    <div id="response-interface" class="response-interface">
+                        <!-- Réponse texte -->
+                        <div id="text-response" class="response-section">
+                            <textarea id="text-input" placeholder="Tapez votre réponse ici..." rows="6"></textarea>
+                        </div>
 
-// Éléments de question
-const questionText = document.getElementById('question-text');
-const questionType = document.getElementById('question-type');
-const progressText = document.getElementById('progress-text');
-const progressPercent = document.getElementById('progress-percent');
-const progressFill = document.getElementById('progress-fill');
+                        <!-- Réponse Oui/Non -->
+                        <div id="yesno-response" class="response-section hidden">
+                            <div class="yesno-buttons">
+                                <button id="yes-btn" class="yesno-btn">Oui</button>
+                                <button id="no-btn" class="yesno-btn">Non</button>
+                            </div>
+                        </div>
 
-// Éléments de réponse
-const responseSelector = document.getElementById('response-selector');
-const textModeBtn = document.getElementById('text-mode-btn');
-const audioModeBtn = document.getElementById('audio-mode-btn');
-const textResponse = document.getElementById('text-response');
-const yesnoResponse = document.getElementById('yesno-response');
-const audioResponse = document.getElementById('audio-response');
-const textInput = document.getElementById('text-input');
-const yesBtn = document.getElementById('yes-btn');
-const noBtn = document.getElementById('no-btn');
+                        <!-- Réponse audio -->
+                        <div id="audio-response" class="response-section hidden">
+                            <!-- État de l'enregistrement -->
+                            <div id="recording-status" class="recording-status hidden">
+                                <div class="status-info">
+                                    <div class="status-indicator">
+                                        <div id="status-dot" class="status-dot"></div>
+                                        <span id="status-text">ENREGISTREMENT</span>
+                                    </div>
+                                    <div id="recording-timer" class="recording-timer">00:00</div>
+                                </div>
+                            </div>
 
-// Éléments audio
-const recordingStatus = document.getElementById('recording-status');
-const statusDot = document.getElementById('status-dot');
-const statusText = document.getElementById('status-text');
-const recordingTimerEl = document.getElementById('recording-timer');
-const startRecordingBtn = document.getElementById('start-recording-btn');
-const activeControls = document.getElementById('active-controls');
-const pauseBtn = document.getElementById('pause-btn');
-const resumeBtn = document.getElementById('resume-btn');
-const stopBtn = document.getElementById('stop-btn');
-const playbackSection = document.getElementById('playback-section');
-const playBtn = document.getElementById('play-btn');
-const pausePlaybackBtn = document.getElementById('pause-playback-btn');
-const audioDuration = document.getElementById('audio-duration');
-const deleteBtn = document.getElementById('delete-btn');
-const continueBtn = document.getElementById('continue-btn');
-const validateBtn = document.getElementById('validate-btn');
-const validatedStatus = document.getElementById('validated-status');
-const audioPlayer = document.getElementById('audio-player');
+                            <!-- Contrôles d'enregistrement -->
+                            <div id="recording-controls" class="recording-controls">
+                                <button id="start-recording-btn" class="btn-record">
+                                    <i data-lucide="mic"></i>
+                                    Commencer l'enregistrement
+                                </button>
+                                
+                                <div id="active-controls" class="active-controls hidden">
+                                    <button id="pause-btn" class="btn-control">
+                                        <i data-lucide="pause"></i>
+                                        Pause
+                                    </button>
+                                    <button id="resume-btn" class="btn-control hidden">
+                                        <i data-lucide="play"></i>
+                                        Reprendre
+                                    </button>
+                                    <button id="stop-btn" class="btn-control">
+                                        <i data-lucide="mic-off"></i>
+                                        Arrêter
+                                    </button>
+                                </div>
+                            </div>
 
-// Initialisation
-document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
-    setupEventListeners();
-});
+                            <!-- Playback et actions -->
+                            <div id="playback-section" class="playback-section hidden">
+                                <div class="playback-controls">
+                                    <button id="play-btn" class="btn-play">
+                                        <i data-lucide="play"></i>
+                                    </button>
+                                    <button id="pause-playback-btn" class="btn-play hidden">
+                                        <i data-lucide="pause"></i>
+                                    </button>
+                                    <span id="audio-duration" class="audio-duration">Durée : 00:00</span>
+                                </div>
+                                
+                                <div class="audio-actions">
+                                    <button id="delete-btn" class="btn-secondary">Supprimer</button>
+                                    <button id="continue-btn" class="btn-secondary">
+                                        <i data-lucide="mic"></i>
+                                        Continuer l'enregistrement
+                                    </button>
+                                    <button id="validate-btn" class="btn-success">
+                                        <i data-lucide="check"></i>
+                                        Valider comme réponse
+                                    </button>
+                                    <div id="validated-status" class="validated-status hidden">
+                                        <i data-lucide="check"></i>
+                                        Réponse validée
+                                    </div>
+                                </div>
+                            </div>
 
-function initializeApp() {
-    showWelcomeScreen();
-}
+                            <audio id="audio-player" style="display: none;"></audio>
+                        </div>
+                    </div>
 
-function setupEventListeners() {
-    // Navigation
-    startBtn.addEventListener('click', startQuestionnaire);
-    prevBtn.addEventListener('click', previousQuestion);
-    nextBtn.addEventListener('click', nextQuestion);
-    restartBtn.addEventListener('click', restartQuestionnaire);
+                    <!-- Navigation -->
+                    <div class="navigation">
+                        <button id="prev-btn" class="btn-nav" disabled>
+                            <i data-lucide="chevron-left"></i>
+                            Précédent
+                        </button>
+                        
+                        <button id="next-btn" class="btn-nav primary" disabled>
+                            <span id="next-text">Suivant</span>
+                            <i data-lucide="chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    // Mode de réponse
-    textModeBtn.addEventListener('click', () => setResponseMode('text'));
-    audioModeBtn.addEventListener('click', () => setResponseMode('audio'));
+        <!-- Écran de fin -->
+        <div id="completion-screen" class="screen hidden">
+            <div class="container">
+                <div class="completion-card">
+                    <div class="completion-header">
+                        <div class="icon-circle success">
+                            <i data-lucide="check"></i>
+                        </div>
+                        <h2>Questionnaire terminé avec succès !</h2>
+                    </div>
+                    
+                    <div class="completion-content">
+                        <div class="completion-section success">
+                            <h3>🎉 Merci pour votre participation !</h3>
+                            <p>Vos réponses ont été enregistrées et transmises avec succès. 
+                               Notre équipe va maintenant procéder à l'analyse automatique de vos données.</p>
+                            <div class="response-count">
+                                <strong id="total-responses">0 réponses</strong> collectées et sauvegardées
+                            </div>
+                        </div>
+                        
+                        <div class="completion-section blue">
+                            <h3>🔄 Prochaines étapes :</h3>
+                            <ul>
+                                <li>• <strong>Transcription automatique</strong> de vos réponses audio</li>
+                                <li>• <strong>Analyse et résumé</strong> personnalisé de votre projet</li>
+                                <li>• <strong>Rapport détaillé</strong> envoyé par email sous 24-48h</li>
+                                <li>• <strong>Recommandations</strong> adaptées à votre secteur d'activité</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="completion-section amber">
+                            <h3>📧 Contact :</h3>
+                            <p>Si vous avez des questions ou souhaitez des précisions, 
+                               n'hésitez pas à nous contacter. Nous reviendrons vers vous très prochainement !</p>
+                        </div>
+                    </div>
+                    
+                    <div class="completion-footer">
+                        <p id="completion-time" class="completion-time"></p>
+                        <button id="restart-btn" class="btn-secondary">Nouveau questionnaire</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    // Réponse texte
-    textInput.addEventListener('input', handleTextInput);
+        <!-- Loading overlay -->
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p>Envoi en cours...</p>
+            </div>
+        </div>
+    </div>
 
-    // Réponse Oui/Non
-    yesBtn.addEventListener('click', () => handleYesNoResponse('Oui'));
-    noBtn.addEventListener('click', () => handleYesNoResponse('Non'));
-
-    // Contrôles audio
-    startRecordingBtn.addEventListener('click', startRecording);
-    pauseBtn.addEventListener('click', pauseRecording);
-    resumeBtn.addEventListener('click', resumeRecording);
-    stopBtn.addEventListener('click', stopRecording);
-    playBtn.addEventListener('click', playRecording);
-    pausePlaybackBtn.addEventListener('click', pausePlayback);
-    deleteBtn.addEventListener('click', deleteRecording);
-    continueBtn.addEventListener('click', continueRecording);
-    validateBtn.addEventListener('click', validateRecording);
-
-    // Audio player events
-    audioPlayer.addEventListener('ended', () => {
-        playBtn.classList.remove('hidden');
-        pausePlaybackBtn.classList.add('hidden');
-    });
-}
-
-// Navigation entre écrans
-function showWelcomeScreen() {
-    welcomeScreen.classList.remove('hidden');
-    questionnaireScreen.classList.add('hidden');
-    completionScreen.classList.add('hidden');
-}
-
-function showQuestionnaireScreen() {
-    welcomeScreen.classList.add('hidden');
-    questionnaireScreen.classList.remove('hidden');
-    completionScreen.classList.add('hidden');
-}
-
-function showCompletionScreen() {
-    welcomeScreen.classList.add('hidden');
-    questionnaireScreen.classList.add('hidden');
-    completionScreen.classList.remove('hidden');
-}
-
-function startQuestionnaire() {
-    currentQuestion = 0;
-    responses = {};
-    showQuestionnaireScreen();
-    displayQuestion();
-}
-
-function restartQuestionnaire() {
-    currentQuestion = 0;
-    responses = {};
-    responseMode = 'text';
-    resetAudioState();
-    showWelcomeScreen();
-}
-
-// Gestion des questions
-function displayQuestion() {
-    const question = questionsData[currentQuestion];
-    
-    // Mise à jour du contenu
-    questionText.textContent = question.question;
-    questionType.textContent = question.type;
-    
-    // Mise à jour de la progression
-    const progress = ((currentQuestion + 1) / questionsData.length) * 100;
-    progressText.textContent = `Question ${currentQuestion + 1} sur ${questionsData.length}`;
-    progressPercent.textContent = `${Math.round(progress)}%`;
-    progressFill.style.width = `${progress}%`;
-    
-    // Configuration de l'interface de réponse
-    setupResponseInterface(question);
-    
-    // Mise à jour des boutons de navigation
-    updateNavigationButtons();
-    
-    // Charger la réponse précédente si elle existe
-    loadPreviousResponse();
-}
-
-function setupResponseInterface(question) {
-    // Masquer toutes les sections
-    textResponse.classList.add('hidden');
-    yesnoResponse.classList.add('hidden');
-    audioResponse.classList.add('hidden');
-    responseSelector.classList.add('hidden');
-    
-    // Reset des boutons de mode
-    textModeBtn.classList.remove('active');
-    audioModeBtn.classList.remove('active');
-    
-    if (question.type === "Short text") {
-        textResponse.classList.remove('hidden');
-        responseMode = 'text';
-    } else if (question.type === "Yes / No") {
-        yesnoResponse.classList.remove('hidden');
-        responseMode = 'yesno';
-    } else {
-        // Question avec choix audio/texte
+    <script src="script.js"></script>
+    <script>
+        // Initialiser les icônes Lucide
+        lucide.createIcons();
+    </script>
+</body>
+</html>
