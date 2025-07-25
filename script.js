@@ -26,39 +26,57 @@ function startInterview() {
 
 function showQuestion() {
   const container = document.getElementById("question-section");
+  container.style.display = "block";
   container.innerHTML = "";
 
-  const question = questions[currentQuestion];
-  if (!question) {
-    document.getElementById("thanks-section").style.display = "block";
+  const q = questions[currentQuestion];
+  if (!q) {
+    document.getElementById("question-section").style.display = "none";
+    document.getElementById("thank-you").style.display = "block";
     return;
   }
 
   const title = document.createElement("h2");
-  title.textContent = `Question ${question["Question #"]} : ${question.Intitulé}`;
+  title.textContent = `Question ${q["Question #"]} : ${q.Intitulé}`;
   container.appendChild(title);
 
-  if (question["Type "]?.toLowerCase().includes("text")) {
-    const textarea = document.createElement("textarea");
-    textarea.rows = 4;
-    textarea.id = "response-input";
-    container.appendChild(textarea);
+  const inputType = q["Type "].toLowerCase().trim();
+  let input;
+
+  if (inputType.includes("email")) {
+    input = document.createElement("input");
+    input.type = "email";
+    input.placeholder = "Votre adresse email";
+  } else if (inputType.includes("text")) {
+    input = document.createElement("textarea");
+    input.placeholder = "Votre réponse";
+  } else if (inputType.includes("voice") || inputType.includes("upload") || inputType.includes("audio")) {
+    input = document.createElement("input");
+    input.type = "file";
+    input.accept = "audio/*";
   } else {
-    const audioInput = document.createElement("input");
-    audioInput.type = "file";
-    audioInput.accept = "audio/*";
-    audioInput.capture = "microphone";
-    audioInput.id = "response-input";
-    container.appendChild(audioInput);
+    // Fallback champ texte
+    input = document.createElement("textarea");
+    input.placeholder = "Votre réponse";
   }
 
-  const submitBtn = document.createElement("button");
-  submitBtn.textContent = "Valider cette réponse";
-  submitBtn.onclick = submitResponse;
-  container.appendChild(submitBtn);
+  input.id = "response-input";
+  container.appendChild(input);
 
-  container.style.display = "block";
+  const button = document.createElement("button");
+  button.textContent = "Valider cette réponse";
+  button.onclick = () => {
+    const inputValue = input.value || input.files?.length;
+    if (!inputValue) {
+      alert("Réponse requise.");
+      return;
+    }
+    currentQuestion++;
+    showQuestion();
+  };
+  container.appendChild(button);
 }
+
 
 function submitResponse() {
   const input = document.getElementById("response-input");
