@@ -1,52 +1,46 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+/* 📘 style.css – VoxPop Audio Interview UI */
 
 body {
-  font-family: 'Poppins', sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: #f7f9fc;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f8f9fa;
   color: #333;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
 }
 
 .container {
   max-width: 600px;
-  width: 100%;
-  margin: 2rem;
+  margin: auto;
   background: #fff;
-  border-radius: 8px;
-  padding: 2rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 30px 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
 h1, h2 {
+  color: #005b96;
   text-align: center;
-  color: #2c3e50;
 }
 
 textarea, input[type="email"] {
   width: 100%;
-  padding: 1rem;
-  font-size: 1rem;
+  padding: 10px;
+  margin: 15px 0;
+  font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 5px;
-  margin: 1rem 0;
-  box-sizing: border-box;
   resize: vertical;
 }
 
 button {
-  font-family: inherit;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  margin: 10px 5px 0 0;
+  padding: 10px 15px;
   border: none;
   border-radius: 5px;
-  margin: 0.5rem;
+  font-weight: bold;
+  font-size: 14px;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: background 0.2s ease-in-out;
 }
 
 button:hover {
@@ -54,89 +48,52 @@ button:hover {
 }
 
 button:disabled {
-  background-color: #ccc;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* Boutons spécifiques */
-button.rec {
-  background-color: #e74c3c;
+button:nth-child(1) { background: #28a745; color: white; }     /* REC */
+button:nth-child(2) { background: #ffc107; color: black; }     /* Pause */
+button:nth-child(3) { background: #007bff; color: white; }     /* Reprendre */
+button:nth-child(4) { background: #6c757d; color: white; }     /* Réécouter */
+button:nth-child(5) { background: #dc3545; color: white; }     /* Effacer */
+
+#question-section button:last-of-type {
+  background: #20c997;
+  color: white;
+  margin-top: 20px;
+}
+
+#next-question-btn {
+  background: #17a2b8;
   color: white;
 }
 
-button.pause {
-  background-color: #f39c12;
-  color: white;
-}
-
-button.resume {
-  background-color: #3498db;
-  color: white;
-}
-
-button.play {
-  background-color: #2ecc71;
-  color: white;
-}
-
-button.reset {
-  background-color: #9b59b6;
-  color: white;
-}
-
-button.validate {
-  background-color: #27ae60;
-  color: white;
-  font-weight: 600;
-}
-
-button.next {
-  background-color: #2980b9;
-  color: white;
-  font-weight: 600;
-}
-
-/* Timeline */
-#timeline {
-  width: 100%;
-  height: 10px;
-  background-color: #ddd;
-  border-radius: 5px;
-  margin-top: 10px;
-  overflow: hidden;
-  position: relative;
-}
-
-#timeline-fill {
-  height: 100%;
-  background-color: #2ecc71;
-  width: 0%;
-  transition: width 1s linear;
-}
-
-/* Audio preview */
 audio {
-  width: 100%;
-  margin-top: 1rem;
   display: block;
+  margin-top: 20px;
+  width: 100%;
 }
 
-/* Message de remerciement */
-#thank-you {
-  text-align: center;
-  font-size: 1.2rem;
-  color: #27ae60;
+canvas#audio-visualizer {
+  display: block;
+  margin: 20px auto;
+  background: #f1f1f1;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
-/* Responsive */
 @media screen and (max-width: 600px) {
-  .container {
-    margin: 1rem;
-    padding: 1rem;
-  }
-
   button {
     width: 100%;
-    margin: 0.25rem 0;
+    margin: 8px 0;
+  }
+
+  .container {
+    padding: 20px 15px;
+  }
+
+  canvas#audio-visualizer {
+    width: 100%;
   }
 }
