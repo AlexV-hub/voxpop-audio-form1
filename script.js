@@ -1,14 +1,11 @@
-// 📜 script.js – VoxPop Audio Interview avec contrôle avancé des enregistrements
+// 📜 script.js – VoxPop Audio Interview avec état REC/Pause/Reprendre/Réécoute/Effacer + interface texte
 
 let questions = [];
 let currentQuestion = 0;
 let mediaRecorder;
 let recordedChunks = [];
 let recordedBlob = null;
-let stream;
-let audioPreview;
-let audioVisualizer;
-let analyser, dataArray, animationId;
+let stream = null;
 
 const sheetURL = "https://script.google.com/macros/s/AKfycby2qX7_YLIouSJg_v4Vdf6wFU8V5hX9WBymOyy1MbQfPKThNJauihRc9MKUE9d6V68Qrg/exec";
 
@@ -32,12 +29,9 @@ function showQuestion() {
   container.style.display = "block";
   container.innerHTML = "";
 
-  recordedBlob = null;
-  recordedChunks = [];
-
   const q = questions[currentQuestion];
   if (!q) {
-    container.style.display = "none";
+    document.getElementById("question-section").style.display = "none";
     document.getElementById("thank-you").style.display = "block";
     return;
   }
@@ -54,188 +48,111 @@ function showQuestion() {
     input.type = "email";
     input.id = "response-input";
     container.appendChild(input);
+  } else if (inputType.includes("text") && !inputType.includes("voice")) {
+    input = document.createElement("textarea");
+    input.id = "response-input";
+    container.appendChild(input);
+  } else if (inputType.includes("voice") && inputType.includes("text")) {
+    input = document.createElement("textarea");
+    input.id = "response-input";
+    container.appendChild(input);
+    container.appendChild(document.createElement("br"));
+    container.appendChild(document.createTextNode("Ou réponse vocale :"));
+    container.appendChild(document.createElement("br"));
+    createAudioInterface(container);
+  } else if (inputType.includes("voice")) {
+    container.appendChild(document.createTextNode("Réponse vocale :"));
+    container.appendChild(document.createElement("br"));
+    createAudioInterface(container);
   } else {
     input = document.createElement("textarea");
     input.id = "response-input";
     container.appendChild(input);
   }
 
-  container.appendChild(document.createElement("p")).textContent = "Ou réponse vocale :";
-  createAudioInterface(container);
-
   const validateBtn = document.createElement("button");
   validateBtn.textContent = "✅ Valider la réponse";
+  validateBtn.classList.add("validate-btn");
   validateBtn.onclick = () => submitResponse(q);
-  validateBtn.style.marginTop = "20px";
+  container.appendChild(document.createElement("br"));
   container.appendChild(validateBtn);
-
-  const nextBtn = document.createElement("button");
-  nextBtn.textContent = "⏭️ Question suivante";
-  nextBtn.style.display = "none";
-  nextBtn.id = "next-question-btn";
-  nextBtn.onclick = () => {
-    currentQuestion++;
-    showQuestion();
-  };
-  container.appendChild(nextBtn);
 }
 
 function createAudioInterface(container) {
-  const buttonContainer = document.createElement("div");
-  buttonContainer.id = "audio-controls";
-  container.appendChild(buttonContainer);
+  const audioControls = document.createElement("div");
+  audioControls.id = "audio-controls";
 
-  const recBtn = createButton("🎙️ REC", startRecording);
-  const pauseBtn = createButton("⏸️ Pause", pauseRecording);
-  const resumeBtn = createButton("▶️ Reprendre REC", resumeRecording);
-  const playBtn = createButton("🔁 Réécouter", replayRecording);
-  const deleteBtn = createButton("🗑️ Effacer", confirmDeleteRecording);
+  const recBtn = createAudioButton("🎙️ REC", startRecording, "rec-btn");
+  const pauseBtn = createAudioButton("⏸️ Pause", pauseRecording, "pause-btn");
+  const resumeBtn = createAudioButton("▶️ Reprendre REC", resumeRecording, "resume-btn");
+  const playBtn = createAudioButton("🔊 Réécouter", playRecording, "play-btn");
+  const deleteBtn = createAudioButton("🗑️ Effacer", confirmErase, "delete-btn");
 
-  pauseBtn.style.display = "none";
-  resumeBtn.style.display = "none";
-  playBtn.style.display = "none";
-  deleteBtn.style.display = "none";
+  audioControls.appendChild(recBtn);
+  audioControls.appendChild(pauseBtn);
+  audioControls.appendChild(resumeBtn);
+  audioControls.appendChild(playBtn);
+  audioControls.appendChild(deleteBtn);
+  container.appendChild(audioControls);
 
-  buttonContainer.append(recBtn, pauseBtn, resumeBtn, playBtn, deleteBtn);
-
-  const canvas = document.createElement("canvas");
-  canvas.id = "audio-visualizer";
-  canvas.width = 300;
-  canvas.height = 50;
-  container.appendChild(canvas);
+  const audioPreview = document.createElement("audio");
+  audioPreview.id = "audio-preview";
+  audioPreview.controls = true;
+  container.appendChild(audioPreview);
 }
 
-function createButton(label, handler) {
+function createAudioButton(text, handler, className) {
   const btn = document.createElement("button");
-  btn.textContent = label;
+  btn.textContent = text;
+  btn.classList.add("audio-button");
+  if (className) btn.classList.add(className);
   btn.onclick = handler;
   return btn;
 }
 
 function startRecording() {
+  recordedChunks = [];
   navigator.mediaDevices.getUserMedia({ audio: true }).then(s => {
     stream = s;
     mediaRecorder = new MediaRecorder(stream);
-    analyser = new (window.AudioContext || window.webkitAudioContext)().createAnalyser();
-    const source = new (window.AudioContext || window.webkitAudioContext)().createMediaStreamSource(stream);
-    source.connect(analyser);
-    dataArray = new Uint8Array(analyser.frequencyBinCount);
-    visualize();
-
-    mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
+    mediaRecorder.ondataavailable = e => {
+      if (e.data.size > 0) recordedChunks.push(e.data);
+    };
     mediaRecorder.onstop = () => {
       recordedBlob = new Blob(recordedChunks, { type: "audio/webm" });
-      cancelAnimationFrame(animationId);
-      showAudioPreview();
+      document.getElementById("audio-preview").src = URL.createObjectURL(recordedBlob);
     };
-
-    recordedChunks = [];
     mediaRecorder.start();
-
-    toggleButtons({ recording: true });
-  });
+  }).catch(console.error);
 }
 
 function pauseRecording() {
-  if (mediaRecorder?.state === "recording") {
-    mediaRecorder.pause();
-    toggleButtons({ paused: true });
-  }
+  if (mediaRecorder?.state === "recording") mediaRecorder.pause();
 }
 
 function resumeRecording() {
-  if (mediaRecorder?.state === "paused") {
-    mediaRecorder.resume();
-    toggleButtons({ recording: true });
-  }
+  if (mediaRecorder?.state === "paused") mediaRecorder.resume();
 }
 
-function confirmDeleteRecording() {
-  if (confirm("Voulez-vous vraiment supprimer cet enregistrement ?")) {
-    recordedChunks = [];
-    recordedBlob = null;
-    if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
-    document.getElementById("audio-preview")?.remove();
-    toggleButtons({ reset: true });
-  }
-}
-
-function replayRecording() {
+function playRecording() {
   if (recordedBlob) {
     const audio = document.getElementById("audio-preview");
-    if (audio) audio.play();
+    audio.src = URL.createObjectURL(recordedBlob);
+    audio.play();
   }
 }
 
-function showAudioPreview() {
-  const old = document.getElementById("audio-preview");
-  if (old) old.remove();
-
-  const audio = document.createElement("audio");
-  audio.id = "audio-preview";
-  audio.controls = true;
-  audio.src = URL.createObjectURL(recordedBlob);
-  document.getElementById("question-section").appendChild(audio);
-
-  toggleButtons({ done: true });
-}
-
-function toggleButtons(state) {
-  const controls = document.getElementById("audio-controls");
-  if (!controls) return;
-  const [recBtn, pauseBtn, resumeBtn, playBtn, deleteBtn] = controls.children;
-
-  if (state.reset) {
-    recBtn.style.display = "inline-block";
-    pauseBtn.style.display = "none";
-    resumeBtn.style.display = "none";
-    playBtn.style.display = "none";
-    deleteBtn.style.display = "none";
-  } else if (state.recording) {
-    recBtn.style.display = "none";
-    pauseBtn.style.display = "inline-block";
-    resumeBtn.style.display = "none";
-    playBtn.style.display = "none";
-    deleteBtn.style.display = "none";
-  } else if (state.paused) {
-    recBtn.style.display = "none";
-    pauseBtn.style.display = "none";
-    resumeBtn.style.display = "inline-block";
-    playBtn.style.display = "none";
-    deleteBtn.style.display = "none";
-  } else if (state.done) {
-    recBtn.style.display = "none";
-    pauseBtn.style.display = "none";
-    resumeBtn.style.display = "none";
-    playBtn.style.display = "inline-block";
-    deleteBtn.style.display = "inline-block";
+function confirmErase() {
+  if (confirm("Effacer l'enregistrement et recommencer ?")) {
+    recordedChunks = [];
+    recordedBlob = null;
+    document.getElementById("audio-preview").src = "";
+    if (mediaRecorder?.state === "recording") mediaRecorder.stop();
   }
-}
-
-function visualize() {
-  const canvas = document.getElementById("audio-visualizer");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-
-  function draw() {
-    animationId = requestAnimationFrame(draw);
-    analyser.getByteFrequencyData(dataArray);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const barWidth = (canvas.width / dataArray.length) * 2.5;
-    let x = 0;
-    for (let i = 0; i < dataArray.length; i++) {
-      const barHeight = dataArray[i] / 2;
-      ctx.fillStyle = "#007bff";
-      ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
-      x += barWidth + 1;
-    }
-  }
-  draw();
 }
 
 function submitResponse(question) {
   const text = document.getElementById("response-input")?.value || "";
-
   if (!text && !recordedBlob) {
     alert("Réponse obligatoire");
     return;
@@ -244,6 +161,7 @@ function submitResponse(question) {
   const formData = new FormData();
   formData.append("index", currentQuestion);
   formData.append("text", text);
+
   if (recordedBlob) {
     formData.append("audio", recordedBlob, `question${currentQuestion + 1}.webm`);
   }
@@ -252,7 +170,9 @@ function submitResponse(question) {
     method: "POST",
     body: formData
   }).then(() => {
-    document.getElementById("next-question-btn").style.display = "inline-block";
+    recordedBlob = null;
+    currentQuestion++;
+    showQuestion();
   }).catch(err => {
     alert("Erreur d'envoi des données : " + err);
     console.error(err);
