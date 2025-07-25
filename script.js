@@ -1,4 +1,4 @@
-// 📜 script.js – VoxPop Audio Interview (Texte ou Audio, Upload, Pré-écoute, Validation)
+// 📜 script.js – VoxPop Audio Interview avec audio + texte pour toutes les questions vocales
 
 let questions = [];
 let currentQuestion = 0;
@@ -6,6 +6,7 @@ let mediaRecorder;
 let recordedChunks = [];
 let recordedBlob = null;
 
+// ✅ Ton URL Google Apps Script ici :
 const sheetURL = "https://script.google.com/macros/s/AKfycby2qX7_YLIouSJg_v4Vdf6wFU8V5hX9WBymOyy1MbQfPKThNJauihRc9MKUE9d6V68Qrg/exec";
 
 window.onload = () => {
@@ -30,7 +31,7 @@ function showQuestion() {
 
   const q = questions[currentQuestion];
   if (!q) {
-    container.style.display = "none";
+    document.getElementById("question-section").style.display = "none";
     document.getElementById("thank-you").style.display = "block";
     return;
   }
@@ -51,7 +52,11 @@ function showQuestion() {
     input = document.createElement("textarea");
     input.id = "response-input";
     container.appendChild(input);
-  } else if (inputType.includes("voice") && inputType.includes("text")) {
+  } else if (
+    inputType.includes("voice") ||
+    inputType.includes("audio") ||
+    inputType.includes("upload")
+  ) {
     input = document.createElement("textarea");
     input.placeholder = "Réponse écrite (optionnelle)";
     input.id = "response-input";
@@ -60,26 +65,16 @@ function showQuestion() {
     container.appendChild(document.createTextNode("🎙️ Ou réponds oralement :"));
     container.appendChild(document.createElement("br"));
     createAudioInterface(container);
-  } else if (inputType.includes("voice")) {
-    container.appendChild(document.createTextNode("🎙️ Réponds oralement :"));
-    container.appendChild(document.createElement("br"));
-    createAudioInterface(container);
   } else {
     input = document.createElement("textarea");
     input.id = "response-input";
     container.appendChild(input);
   }
 
-  container.appendChild(document.createElement("br"));
-
-  // ✅ Bouton de validation stylisé
-  const validateBtn = document.createElement("button");
-  validateBtn.textContent = "✅ Valider cette réponse";
-  validateBtn.onclick = () => submitResponse(q);
-  validateBtn.style.marginTop = "30px";
-  validateBtn.style.backgroundColor = "#28a745";
-  validateBtn.style.fontWeight = "bold";
-  container.appendChild(validateBtn);
+  const button = document.createElement("button");
+  button.textContent = "Valider cette réponse";
+  button.onclick = () => submitResponse(q);
+  container.appendChild(button);
 }
 
 function createAudioInterface(container) {
@@ -146,10 +141,8 @@ function showAudioPreview(blob) {
 
 function submitResponse(question) {
   const text = document.getElementById("response-input")?.value || "";
-
-  // ✅ Vérifie qu'au moins texte ou audio est fourni
-  if (!text.trim() && !recordedBlob) {
-    alert("Veuillez écrire une réponse ou enregistrer un message audio.");
+  if (!text && !recordedBlob) {
+    alert("Réponse obligatoire");
     return;
   }
 
