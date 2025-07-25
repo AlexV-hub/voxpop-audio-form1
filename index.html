@@ -1,0 +1,35 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VoxPop - Interview Audio</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Interview VoxPop</h1>
+    <div id="intro-section">
+      <p id="intro-text">
+        Bienvenue! Afin de mieux appréhender votre vision du projet Vox-Pop!, je vous propose de répondre à 10 questions de façon écrite ou orale ( de façon sécurisée et confidentielle- les datas seront traitées en local). Vous pourrez valider chacune de vos réponses avant de passer à la suivante, soyez spontanée et si  pour le moment la question est sans réponse, vous pourrez simplement dire que ce sont des points à définir plus tard. Installez vous confortablement et Cliquez sur "Commencer" pour débuter.
+      </p>
+      <button onclick="startInterview()">Commencer</button>
+    </div>
+    <div id="question-section" style="display: none;">
+      <h2 id="question-title"></h2>
+      <textarea id="text-response" placeholder="Réponse texte (optionnelle)"></textarea>
+      <div>
+        <button onclick="startRecording()">🎙️ Enregistrer</button>
+        <button onclick="stopRecording()">⏹️ Stop</button>
+      </div>
+      <button onclick="submitResponse()">Envoyer la réponse</button>
+    </div>
+    <div id="thank-you" style="display: none;">
+      <h2>Merci pour vos réponses elles me permettront de mieux consolider un document que je vous soumettrai pour correction 🙏</h2>
+    </div>
+  </div>
+  <script src="script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</body>
+</html>
