@@ -1,134 +1,134 @@
-/* 🌐 style.css – VoxPop audio form */
-
 body {
-  font-family: 'Segoe UI', Roboto, sans-serif;
-  background-color: #f6f9fc;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f4f7fa;
   margin: 0;
   padding: 0;
+  display: flex;
+  justify-content: center;
 }
 
 .container {
-  max-width: 720px;
+  background-color: white;
+  max-width: 700px;
   margin: 40px auto;
-  padding: 30px;
-  background-color: #fff;
+  padding: 40px 30px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
-  text-align: center;
-  color: #004080;
-  margin-bottom: 20px;
-}
-
-h2 {
-  color: #0d3b66;
-  margin-bottom: 15px;
-  font-size: 1.3rem;
-  text-align: center;
-}
-
-#intro-text {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: #333;
+  color: #003366;
   text-align: center;
   margin-bottom: 30px;
 }
 
-textarea,
-input[type="email"] {
-  width: 100%;
-  padding: 12px;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  resize: vertical;
+h2 {
+  color: #004080;
+  font-size: 1.2rem;
+  text-align: center;
   margin-bottom: 20px;
 }
 
-audio {
+textarea, input[type="email"], input[type="text"] {
   width: 100%;
-  margin-top: 15px;
-}
-
-.audio-button {
-  font-size: 0.95rem;
-  padding: 10px 14px;
-  border: none;
-  margin: 6px 5px;
+  padding: 12px;
+  margin: 15px 0;
+  border: 1px solid #ccc;
   border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
   cursor: pointer;
-  color: white;
-  font-weight: bold;
-  transition: 0.2s ease-in-out;
+  margin: 5px;
+  transition: background 0.2s;
 }
 
-.rec-btn {
+/* Boutons personnalisés */
+.rec {
   background-color: #28a745;
+  color: white;
+}
+.rec:hover {
+  background-color: #218838;
 }
 
-.pause-btn {
+.pause {
   background-color: #ffc107;
-  color: #212529;
+  color: black;
+}
+.pause:hover {
+  background-color: #e0a800;
 }
 
-.resume-btn {
+.resume {
   background-color: #007bff;
+  color: white;
+}
+.resume:hover {
+  background-color: #0056b3;
 }
 
-.play-btn {
+.playback {
   background-color: #17a2b8;
+  color: white;
+}
+.playback:hover {
+  background-color: #117a8b;
 }
 
-.delete-btn {
+.delete {
   background-color: #dc3545;
+  color: white;
 }
-
-.audio-button:hover {
-  opacity: 0.9;
+.delete:hover {
+  background-color: #c82333;
 }
 
 .validate-btn {
-  background-color: #2d2d8d;
+  background-color: #291bc1;
   color: white;
-  padding: 12px 20px;
-  font-size: 1rem;
-  border: none;
-  border-radius: 8px;
-  margin-top: 25px;
   display: block;
-  width: 100%;
+  margin: 30px auto 0;
+  padding: 12px 25px;
   font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
 }
-
 .validate-btn:hover {
-  background-color: #1a1a6d;
+  background-color: #1b0f91;
 }
 
-#thank-you {
-  text-align: center;
-  font-size: 1.1rem;
-  color: #2e7d32;
-  margin-top: 30px;
+.audio-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 10px;
 }
 
+#audio-preview {
+  margin-top: 20px;
+  width: 100%;
+  height: 40px;
+  display: none;
+}
+
+/* Responsive */
 @media (max-width: 600px) {
   .container {
-    margin: 20px 10px;
-    padding: 20px;
+    padding: 25px 15px;
   }
 
-  h2 {
-    font-size: 1.1rem;
-  }
-
-  .audio-button,
-  .validate-btn {
+  button {
     width: 100%;
-    margin: 8px 0;
+  }
+
+  .audio-controls {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
