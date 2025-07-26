@@ -560,25 +560,43 @@ function resetAudioState() {
 // Soumission des données
 async function submitResponses() {
     loadingOverlay.classList.remove('hidden');
-    
+
     try {
-        const formData = new FormData();
-        formData.append('timestamp', new Date().toISOString());
-        
+        const payload = {};
+
         for (const [questionId, response] of Object.entries(responses)) {
             const question = questionsData.find(q => q.id === parseInt(questionId));
-            
-            if (response.type === 'audio') {
-                const audioBase64 = await audioToBase64(response.data);
-                formData.append(`question_${questionId}`, audioBase64);
-                formData.append(`question_${questionId}_type`, 'audio');
-            } else {
-                formData.append(`question_${questionId}`, response.data);
-                formData.append(`question_${questionId}_type`, 'text');
-            }
-            formData.append(`question_${questionId}_text`, question.question);
+            const content = response.type === 'audio'
+                ? await audioToBase64(response.data)
+                : response.data;
+
+            payload[`question_${questionId}`] = content;
+            payload[`question_${questionId}_type`] = response.type;
+            payload[`question_${questionId}_text`] = question.question;
         }
-        
+
+        const response = await fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showCompletionScreen();
+            displayCompletionInfo();
+        } else {
+            console.error('Erreur serveur:', result.error);
+            alert('Erreur lors de l\'envoi: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Erreur envoi:', error);
+        alert('Erreur lors de l\'envoi des données. Veuillez réessayer.');
+    } finally {
+        loadingOverlay.classList.add('hidden');
+    }
+}
         const response = await fetch(GOOGLE_SHEET_URL, {
             method: 'POST',
             body: formData,
